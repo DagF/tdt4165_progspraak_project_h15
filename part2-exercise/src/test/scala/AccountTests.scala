@@ -67,11 +67,21 @@ class AccountTests extends FunSuite {
     assert(acc.getBalanceAmount == 54500)
   }
 
+//  test("Test 07: Account IDs are unique") {
+//    val firstId = bank.generateAccountId
+//    val threads = (1 until 10000).map(_ => Main.thread {
+//      bank generateAccountId
+//    })
+//    val nextId = bank.generateAccountId
+//    assert((nextId - 10000) == firstId)
+//  }
+
   test("Test 07: Account IDs are unique") {
     val firstId = bank.generateAccountId
     val threads = (1 until 10000).map(_ => Main.thread {
       bank generateAccountId
     })
+    for (t <- threads) { t.join }
     val nextId = bank.generateAccountId
     assert((nextId - 10000) == firstId)
   }
@@ -123,6 +133,7 @@ class AccountTransferTests extends FunSuite {
     acc1 transferTo(acc2, 150)
 
     while (bank.getProcessedTransactionsAsList.size != 1) {
+      println(bank.getProcessedTransactionsAsList.size)
       Thread.sleep(100)
     }
 
@@ -147,13 +158,33 @@ class AccountTransferTests extends FunSuite {
         bank addTransactionToQueue(acc2, acc1, 23)
       }
     }
-    first.join()
-    second.join()
 
+//    println("First")
+//    println(bank.getTransactionsInTransactionQueueAsList.size)
+//    print(bank.getProcessedTransactionsAsList.size)
+    first.join()
+//
+//    println("Second")
+//    println(bank.getTransactionsInTransactionQueueAsList.size)
+//
+//    println(bank.getProcessedTransactionsAsList.size)
+    second.join()
+//
+//
+//    println(bank.getTransactionsInTransactionQueueAsList.size)
+//    println("A bit later")
+//    println(bank.getProcessedTransactionsAsList.size)
+    println(bank.transactionsQueue.getCount)
     while (bank.getProcessedTransactionsAsList.size != 200) {
+
+      println("new run")
+      println(bank.getTransactionsInTransactionQueueAsList.size)
+      println(bank.getProcessedTransactionsAsList.size)
       Thread.sleep(100)
     }
-
+    println(bank.getProcessedTransactionsAsList.size)
+    println(acc1.getBalanceAmount)
+    println(acc2.getBalanceAmount)
     assert((acc1.getBalanceAmount == 2300) && (acc2.getBalanceAmount == 5700))
 
   }
@@ -167,10 +198,14 @@ class AccountTransferTests extends FunSuite {
 
     for (i <- 1 to 6) { acc1 transferTo (acc2, 50) }
     for (j <- 1 to 2) { acc3 transferTo (acc1, 50) }
-    
+
     while (bank.getProcessedTransactionsAsList.size != 8) {
       Thread.sleep(100)
     }
+
+    println(acc1.getBalanceAmount)
+    println(acc2.getBalanceAmount)
+    println(acc3.getBalanceAmount )
 
     assert((
       acc1.getBalanceAmount == 0)
@@ -191,7 +226,8 @@ class AccountTransferTests extends FunSuite {
     while (bank.getProcessedTransactionsAsList.size != 8) {
       Thread.sleep(100)
     }
-
+    println(acc2.getBalanceAmount)
+    println(acc3.getBalanceAmount)
     assert((acc2.getBalanceAmount != 300) && (acc3.getBalanceAmount == 0))
 
   }
