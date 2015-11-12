@@ -71,9 +71,10 @@ class Bank(val bankId: String) extends Actor {
 
   def processTransaction(t: Transaction): Unit = {
     implicit val timeout = new Timeout(5 seconds)
-    val isInternal = t.to.length <= 4
-    val toBankId = if (isInternal) bankId else t.to.substring(0, 4)
-    val toAccountId = if (isInternal) t.to else t.to.substring(4)
+    val is8Bits= t.to.length <= 4
+    val toBankId = if (is8Bits) bankId else t.to.substring(0, 4)
+    val toAccountId = if (is8Bits) t.to else t.to.substring(4)
+    val isInternal = bankId.equals(toBankId)
     //val transactionStatus = t.status
     //val toBankId = t.to.substring(0, 4)
     //val toAccountId = t.to.substring(4)
