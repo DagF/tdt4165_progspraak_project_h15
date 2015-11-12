@@ -24,7 +24,7 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
 
   def getTransactions: List[Transaction] = {
     // Should return a list of all Transaction-objects stored in transactions
-    ???
+    transactions.values.toList
   }
 
   def allTransactionsCompleted: Boolean = {
@@ -90,7 +90,6 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
     case IdentifyActor => sender ! this
 
     case TransactionRequestReceipt(to, transactionId, transaction) => {
-      println(transactionId)
       transactions.synchronized{
         val t = transactions.get(transactionId)
         t match {
@@ -105,7 +104,6 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
 
     case t: Transaction => {
       // Handle incoming transaction
-      println("We got ere!")
 
       try{
         deposit(t.amount)
