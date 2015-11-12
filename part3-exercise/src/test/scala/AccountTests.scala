@@ -90,6 +90,7 @@ class Test04 extends FunSuite {
     implicit val timeout = Timeout(5 seconds)
 
     account1.transferTo(account2.getFullAddress, 200)
+
     TestHelper.waitUntilAllTransactionsAreCompleted(List(account1, account2))
     assert(account1.getBalanceAmount == 800 && account2.getBalanceAmount == 1200)
 

@@ -20,9 +20,12 @@ object BankManager {
 
   def createAccount(accountId: String, bankId: String, initialBalance: Double): ActorRef = {
     val name = s"account$bankId$accountId"
-    accounts += (name ->
-      actorSystem.actorOf(Props(classOf[Account], accountId, bankId, initialBalance), name = name))
-    accounts(name)
+    accounts.synchronized{
+      accounts += (name ->
+        actorSystem.actorOf(Props(classOf[Account], accountId, bankId, initialBalance), name = name))
+
+      accounts(name)
+    }
   }
 
   def findAccount(bankId: String, accountId: String): ActorRef = {

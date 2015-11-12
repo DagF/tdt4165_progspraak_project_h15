@@ -28,8 +28,15 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
   }
 
   def allTransactionsCompleted: Boolean = {
+    transactions.synchronized {
+      transactions.foreach {
+        case(key, value) => if(value.status == TransactionStatus.PENDING){
+          return false
+        }
+      }
+      true
+    }
     // Should return whether all Transaction-objects in transactions are completed
-    ???
   }
 
   def withdraw(amount: Double): Unit = {
@@ -49,11 +56,11 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
 
   def sendTransactionToBank(t: Transaction): Unit = {
     // Should send a message containing t to the bank of this account
-    ???
+    BankManager.findBank(bankId).forward(t)
   }
 
   def transferTo(accountNumber: String, amount: Double): Transaction = {
-    
+
     val t = new Transaction(from = getFullAddress, to = accountNumber, amount = amount)
 
     if (reserveTransaction(t)) {
@@ -83,17 +90,35 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
     case IdentifyActor => sender ! this
 
     case TransactionRequestReceipt(to, transactionId, transaction) => {
-      // Process receipt
-      ???
+      println(transactionId)
+      transactions.synchronized{
+        val t = transactions.get(transactionId)
+        t match {
+          case Some(tra) => tra.status = transaction.status
+          case None => ???
+        }
+        transaction
+      }
     }
 
     case BalanceRequest => ??? // Should return current balance
 
     case t: Transaction => {
       // Handle incoming transaction
-      ???
+      println("We got ere!")
+
+      try{
+        deposit(t.amount)
+        t.status = TransactionStatus.SUCCESS
+      }
+      catch{
+        case e: Exception => t.status = TransactionStatus.FAILED
+      }
+
+      val transactionReqestReceipt = new TransactionRequestReceipt(t.to, t.id, t)
+      sender ! transactionReqestReceipt
     }
-    
+
     case msg => ???
   }
 
