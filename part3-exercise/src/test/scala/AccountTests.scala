@@ -359,9 +359,12 @@ class Test14 extends FunSuite {
     val acc2Balance: Double = Await.result(ask(accountRef2, BalanceRequest).mapTo[Double], 10 seconds)
     val acc3Balance: Double = Await.result(ask(accountRef3, BalanceRequest).mapTo[Double], 10 seconds)
 
-    assert(acc1Balance + acc2Balance + acc3Balance == 3000)
 
-    assert(acc1Balance == 908 && acc1Balance == account1.getBalanceAmount)
+
+    assert(acc1Balance + acc2Balance + acc3Balance == 3000, "Total balance not equal to 3000")
+
+    assert(acc1Balance == 908, "Account 1 balance should be 908 at the end")
+    assert(acc1Balance == account1.getBalanceAmount, "Should be equal to ")
     assert(acc2Balance == 1196 && acc2Balance == account2.getBalanceAmount)
     assert(acc3Balance == 896 && acc2Balance == account2.getBalanceAmount)
 
@@ -429,7 +432,7 @@ class Test16 extends FunSuite {
       assert(!t.isSuccessful)
     })
 
-    assert(account1.getBalanceAmount == 1000)
+    assert(account1.getBalanceAmount == 1000, "Money not returned when transactions failed, 1000 != " + account1.getBalanceAmount)
 
   }
 }

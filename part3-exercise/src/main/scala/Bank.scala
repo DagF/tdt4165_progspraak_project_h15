@@ -45,22 +45,30 @@ class Bank(val bankId: String) extends Actor {
     case t: Transaction => processTransaction(t)
 
     case t: TransactionRequestReceipt => {
-      val isInternal = t.toAccountNumber.length <= 4
-      val toBankId = if (isInternal) bankId else t.toAccountNumber.substring(0, 4)
-      val toAccountId = if (isInternal) t.toAccountNumber else t.toAccountNumber.substring(4)
+      val is8Bits= t.toAccountNumber.length <= 4
+      val toBankId = if (is8Bits) bankId else t.toAccountNumber.substring(0, 4)
+      val toAccountId = if (is8Bits) t.toAccountNumber else t.toAccountNumber.substring(4)
+      val isInternal = bankId.equals(toBankId)
 
-      if( isInternal ){
-        val account = findAccount( toAccountId)
-        account match {
-          case Some(ref) => ref.forward(t)
-          case None => println("Dit not find it")
+      try {
+        if (isInternal) {
+          val account = findAccount(toAccountId)
+          account match {
+            case Some(ref) => ref.forward(t)
+            case None => println("Dit not find it")
+          }
+        }
+        else {
+          val bank = findOtherBank(toBankId)
+          bank match {
+            case Some(ref) => ref.forward(t)
+            case None => println("Dit not find it")
+          }
         }
       }
-      else{
-        val bank = findOtherBank( toBankId )
-        bank match {
-          case Some(ref) => ref.forward(t)
-          case None => println("Dit not find it")
+      catch {
+        case e :Exception => {
+          println("Failed transactionrecite")
         }
       }
     }
@@ -82,25 +90,65 @@ class Bank(val bankId: String) extends Actor {
     // This method should forward Transaction t to an account or another bank, depending on the "to"-address.
     // HINT: Make use of the variables that have been defined above.
 
-    if( isInternal ){
-      val account = findAccount( toAccountId)
-      account match {
-        case Some(ref) => {
-          ref.forward(t)
+    try{
+      if( isInternal ){
+        val account = findAccount( toAccountId)
+        account match {
+          case Some(ref) => {
+            ref.forward(t)
+          }
+          case None => println("Dit not find it")
         }
-        case None => println("Dit not find it")
       }
-    }
-    else{
-      val bank = findOtherBank( toBankId )
+      else{
+          val bank = findOtherBank( toBankId )
 
-      bank match {
-        case Some(ref) => {
-          ref.forward(t)
+          bank match {
+            case Some(ref) => {
+              ref.forward(t)
+            }
+            case None => println("Dit not find it")
+          }
+
+      }
+
+    }
+    catch{
+      case e :Exception => {
+        t.status = TransactionStatus.FAILED
+
+        val is8Bits= t.from.length <= 4
+        val toBankId = if (is8Bits) bankId else t.from.substring(0, 4)
+        val toAccountId = if (is8Bits) t.from else t.from.substring(4)
+        val isInternal = bankId.equals(toBankId)
+
+
+
+        val transactionReqestReceipt = new TransactionRequestReceipt(t.from, t.id, t)
+
+        if( isInternal ){
+          val account = findAccount( toAccountId)
+          account match {
+            case Some(ref) => {
+              ref.forward(transactionReqestReceipt)
+            }
+            case None => println("Dit not find it")
+          }
         }
-        case None => println("Dit not find it")
+        else{
+          val bank = findOtherBank( toBankId )
+
+          bank match {
+            case Some(ref) => {
+              ref.forward(transactionReqestReceipt)
+            }
+            case None => println("Dit not find it")
+          }
+
+        }
       }
     }
+
 
   }
 }

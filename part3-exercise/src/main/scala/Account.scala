@@ -90,17 +90,28 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
     case IdentifyActor => sender ! this
 
     case TransactionRequestReceipt(to, transactionId, transaction) => {
+
+      println(transaction.status)
       transactions.synchronized{
         val t = transactions.get(transactionId)
         t match {
-          case Some(tra) => tra.status = transaction.status
+          case Some(tra) => {
+            //tra.status = transaction.status
+            println(transaction.status)
+            if( transaction.status == TransactionStatus.FAILED){
+              deposit(transaction.amount)
+            }
+          }
           case None => ???
         }
-        transaction
       }
     }
 
-    case BalanceRequest => ??? // Should return current balance
+    case BalanceRequest => {
+      balance.synchronized{
+        sender ! balance.amount
+      }
+    }
 
     case t: Transaction => {
       // Handle incoming transaction
@@ -113,7 +124,7 @@ class Account(val accountId: String, val bankId: String, val initialBalance: Dou
         case e: Exception => t.status = TransactionStatus.FAILED
       }
 
-      val transactionReqestReceipt = new TransactionRequestReceipt(t.to, t.id, t)
+      val transactionReqestReceipt = new TransactionRequestReceipt(t.from, t.id, t)
       sender ! transactionReqestReceipt
     }
 
